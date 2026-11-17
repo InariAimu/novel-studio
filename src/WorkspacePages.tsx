@@ -1,7 +1,8 @@
-import { BookOpen, ChevronRight, Folder, Image, Moon, Plug, ScrollText, Sun, Monitor, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, Check, ChevronRight, Copy, Folder, Image, Plug, ScrollText, type LucideIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Theme, WorkspacePage } from './App';
 import { chapters, illustrationPrompts, projectName, writingPrompts } from './demo';
+import { projectApi } from './project';
 
 const projectSections = [
   { page: 'chapters', title: '章节', directory: 'manuscript/', count: `${chapters.length - 1} 章`, icon: BookOpen },
@@ -63,44 +64,80 @@ export function PromptLibrary({ prompts, icon: Icon }: { prompts: typeof writing
   );
 }
 
-export function ConnectionPage() {
+export function ConnectionPage({ root }: { root?: string }) {
+  const [program, setProgram] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    if (!root) return;
+    let active = true;
+    void projectApi.mcpProgram().then(value => {
+      if (active) setProgram(value);
+    }).catch(reason => { if (active) setMessage(String(reason)); });
+    return () => { active = false; };
+  }, [root]);
+  const config = root && program ? JSON.stringify({ command: program, args: ['--project', root] }, null, 2) : '';
+
   return (
     <div className="page-scroll">
       <div className="page-content">
         <div className="page-intro">
           <span className="page-icon"><Plug aria-hidden="true" /></span>
-          <div><h2>本地 MCP 服务</h2><p>待实现</p></div>
+          <div><h2>本地 MCP 服务</h2><p>由外部 harness 通过 stdio 启动</p></div>
         </div>
-        <section aria-labelledby="client-heading">
-          <h3 className="section-title" id="client-heading">计划支持的客户端</h3>
-          <div className="surface">
-            <div className="detail-row"><strong className="detail-title">Codex</strong><code>stdio</code></div>
-            <div className="detail-row"><strong className="detail-title">DeepSeek Harness（dsh）</strong><code>stdio</code></div>
-          </div>
-        </section>
+        {config ? (
+          <section aria-labelledby="client-heading">
+            <h3 className="section-title" id="client-heading">当前项目的连接配置</h3>
+            <textarea className="mcp-config" aria-label="MCP 连接配置" readOnly value={config} />
+            <div className="project-actions">
+              <button className="primary-button" type="button" onClick={() => {
+                void navigator.clipboard.writeText(config).then(() => setMessage('已复制配置'))
+                  .catch(() => setMessage('请选择配置文本并复制。'));
+              }}><Copy />复制配置</button>
+              <span role="status">{message}</span>
+            </div>
+          </section>
+        ) : <p className="empty-state">{message || (root ? '请将 novel-studio-mcp 放在桌面程序旁边，再打开此页。' : '打开项目后可查看它的连接配置。')}</p>}
       </div>
     </div>
   );
 }
 
-const themes = [
-  { id: 'light', label: '浅色', icon: Sun },
-  { id: 'dark', label: '深色', icon: Moon },
-  { id: 'system', label: '跟随系统', icon: Monitor },
+export const accentColors = [
+  { color: '#f97316', label: '橙色' },
+  { color: '#3b82f6', label: '蓝色' },
+  { color: '#10b981', label: '绿色' },
+  { color: '#8b5cf6', label: '紫色' },
+  { color: '#e85b73', label: '玫红色' },
 ] as const;
 
-export function Settings({ theme, onThemeChange }: { theme: Theme; onThemeChange: (theme: Theme) => void }) {
+export type AccentColor = (typeof accentColors)[number]['color'];
+
+export function Settings({ theme, accent, onThemeChange, onAccentChange }: {
+  theme: Theme;
+  accent: AccentColor;
+  onThemeChange: (theme: Theme) => void;
+  onAccentChange: (accent: AccentColor) => void;
+}) {
   return (
     <div className="page-scroll">
       <section className="page-content" aria-labelledby="appearance-heading">
-        <h2 id="appearance-heading">外观</h2>
-        <div className="surface settings-surface">
-          <div className="detail-row settings-row">
-            <strong className="detail-title" id="theme-label">界面主题</strong>
-            <div className="segmented" role="group" aria-labelledby="theme-label">
-              {themes.map(({ id, icon: Icon, label }) => (
-                <button type="button" key={id} aria-pressed={id === theme} onClick={() => onThemeChange(id)}>
-                  <Icon aria-hidden="true" />{label}
+        <h2 id="appearance-heading">界面外观</h2>
+        <div className="surface appearance-settings">
+          <label className="appearance-field">
+            <span>主题</span>
+            <select value={theme} onChange={event => onThemeChange(event.currentTarget.value as Theme)}>
+              <option value="system">跟随系统</option>
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+            </select>
+          </label>
+          <div className="appearance-field">
+            <span id="accent-label">强调色</span>
+            <div className="accent-options" role="group" aria-labelledby="accent-label">
+              {accentColors.map(({ color, label }) => (
+                <button type="button" key={color} title={label} aria-label={label} aria-pressed={color === accent}
+                  style={{ backgroundColor: color }} onClick={() => onAccentChange(color)}>
+                  {color === accent && <Check aria-hidden="true" />}
                 </button>
               ))}
             </div>

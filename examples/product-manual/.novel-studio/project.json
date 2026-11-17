@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "Novel Studio 产品说明书",
+  "preset": "manual",
+  "markdown": "gfm",
+  "documents": [
+    { "path": "guide/快速入门.md", "kind": "material" },
+    { "path": "README.md", "kind": "material" }
+  ]
+}

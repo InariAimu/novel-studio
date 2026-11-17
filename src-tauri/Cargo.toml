@@ -2,6 +2,7 @@
 name = "novel-studio"
 version = "0.1.0"
 edition = "2021"
+default-run = "novel-studio"
 description = "Novel Studio desktop workspace"
 
 [features]
@@ -11,4 +12,15 @@ custom-protocol = ["tauri/custom-protocol"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+base64 = "0.23"
+regex = "1"
 tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tempfile = "3"
+uuid = { version = "1", features = ["v4"] }
+walkdir = "2"
+yaml-edit = { version = "0.3", default-features = false }
+zip = { version = "9.6", default-features = false, features = ["deflate-flate2-zlib-rs"] }

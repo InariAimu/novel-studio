@@ -1,6 +1,6 @@
-import { BookOpen, ChevronLeft, ChevronRight, Code2, FileText } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Code2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { chapters, projectName } from './demo';
+import { chapters } from './demo';
 
 export default function Chapters() {
   const [selected, setSelected] = useState(1);
@@ -23,8 +23,8 @@ export default function Chapters() {
           {chapters.map((entry, index) => (
             <li key={entry.file}>
               <button type="button" className="index-item" aria-pressed={index === selected} onClick={() => setSelected(index)}>
-                <FileText aria-hidden="true" />
-                <span><small>{entry.label}</small><strong>{entry.title}</strong></span>
+                <span className="chapter-order">{index || null}</span>
+                <strong>{entry.title}</strong>
               </button>
             </li>
           ))}
@@ -32,7 +32,9 @@ export default function Chapters() {
       </aside>
       <section className="reader" aria-label="章节阅读区">
         <header className="reader-toolbar">
-          <span className="file-path" title={`manuscript/${chapter.file}`}><FileText aria-hidden="true" />{chapter.file}</span>
+          <label className="document-title-field">
+            <span>章名</span><input value={chapter.title} readOnly />
+          </label>
           <div className="segmented" role="group" aria-label="章节视图">
             <button type="button" aria-pressed={mode === 'preview'} onClick={() => setMode('preview')}><BookOpen aria-hidden="true" />预览</button>
             <button type="button" aria-pressed={mode === 'source'} onClick={() => setMode('source')}><Code2 aria-hidden="true" />源码</button>
@@ -41,19 +43,12 @@ export default function Chapters() {
         <div className="reader-scroll" ref={reader}>
           {mode === 'preview' ? (
             <article className="paper">
-              <header className="chapter-heading">
-                <p>{chapter.label}</p>
-                <h2>{chapter.title}</h2>
-              </header>
               <div className="chapter-prose">
                 {chapter.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
               </div>
             </article>
           ) : (
-            <pre className="paper chapter-source"><code>{[
-              selected === 0 ? `# ${projectName}` : `## ${chapter.label} ${chapter.title}`,
-              ...chapter.paragraphs,
-            ].join('\n\n')}</code></pre>
+            <pre className="paper chapter-source"><code>{chapter.paragraphs.join('\n\n')}</code></pre>
           )}
         </div>
         <footer className="reader-footer">
